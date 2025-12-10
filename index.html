@@ -1,210 +1,258 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Birthday Card</title>
-    
-    <meta property="og:image" content="https://yuhara-tee.github.io/fishandtiger/yotsuba.jpg" />
-    
-    <meta property="og:title" content="Fish and Tiger - เว็บไซต์สะสมผลงานของ Yuhara" />
-    
-    <meta property="og:description" content="ยินดีต้อนรับสู่โลกของปลาและเสือ เข้ามาชมโปรเจกต์ Arduino และงานศิลปะของผมได้ที่นี่" />
-    
+    <title>สุขสันต์วันเกิดนะ!</title>
+    <!-- โหลด Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Pacifico&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- โหลดฟอนต์น่ารักๆ -->
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&family=Fira+Code:wght@500&display=swap" rel="stylesheet">
+    
     <style>
         body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            font-family: 'Mali', cursive;
+            background-color: #fef3c7; /* สีเหลืองอ่อนเหมือนเดิม */
+            overflow: hidden;
         }
-        .hand-font {
-            font-family: 'Pacifico', cursive;
+
+        /* ฟอนต์สำหรับโค้ด ให้ดูเป็นโปรแกรมเมอร์แต่อยู่ในธีมน่ารัก */
+        .font-code {
+            font-family: 'Fira Code', monospace;
         }
-        .card-3d {
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d;
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-in forwards;
         }
-        .card-front, .card-back {
-            backface-visibility: hidden;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .card-back {
-            transform: rotateY(180deg);
+
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        .perspective-1000 {
-            perspective: 1000px;
-        }
-        .flip-card.open .card-3d {
-            transform: rotateY(180deg);
-        }
-        
-        /* Floating Animation */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        /* Neon Glow */
-        .neon-glow {
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.3);
+
+        /* Canvas พลุ ต้องอยู่บนสุดแต่ไม่ขวางการกดปุ่ม */
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            pointer-events: none; /* ให้คลิกทะลุไปโดนปุ่มได้ */
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+<body class="flex items-center justify-center h-screen w-full relative">
 
-    <!-- Background Elements -->
-    <div class="fixed inset-0 pointer-events-none">
-        <div class="absolute top-10 left-10 text-yellow-500 opacity-20 text-6xl animate-bounce" style="animation-duration: 3s;"><i class="fa-solid fa-star"></i></div>
-        <div class="absolute bottom-20 right-20 text-blue-500 opacity-20 text-8xl animate-bounce" style="animation-duration: 4s;"><i class="fa-solid fa-gift"></i></div>
-        <div class="absolute top-1/3 right-10 text-pink-500 opacity-20 text-5xl animate-pulse"><i class="fa-solid fa-heart"></i></div>
-        <div class="absolute bottom-10 left-1/4 text-purple-500 opacity-20 text-7xl animate-pulse"><i class="fa-solid fa-music"></i></div>
+    <!-- Canvas สำหรับพลุ -->
+    <canvas id="canvas"></canvas>
+
+    <!-- Background Decorations -->
+    <div class="absolute top-10 left-10 text-4xl animate-bounce" style="animation-duration: 3s;">🎈</div>
+    <div class="absolute bottom-20 right-10 text-4xl animate-bounce" style="animation-duration: 4s;">✨</div>
+    <div class="absolute top-1/2 left-5 text-2xl animate-pulse">🎂</div>
+    <div class="absolute top-20 right-20 text-3xl animate-pulse">🎁</div>
+
+    <!-- STEP 1: หน้ากรอกอายุ -->
+    <div id="page-input" class="bg-white p-8 rounded-2xl card-shadow text-center max-w-sm w-full mx-4 fade-in z-10 border-4 border-orange-200">
+        <h1 class="text-2xl font-bold text-orange-500 mb-6">ขอทราบอายุนิดนึงนะ...</h1>
+        
+        <div class="mb-6">
+            <label for="ageInput" class="block text-gray-600 mb-2">ปีนี้อายุเท่าไหร่แล้ว?</label>
+            <input type="number" id="ageInput" 
+                   class="w-full text-center text-3xl p-3 border-2 border-orange-300 rounded-xl focus:outline-none focus:border-orange-500 text-orange-600 font-bold placeholder-orange-100" 
+                   placeholder="00" inputmode="numeric">
+            <p id="error-msg" class="text-red-400 text-sm mt-2 hidden">กรุณากรอกอายุก่อนนะ!</p>
+        </div>
+
+        <button onclick="goToCardPage()" 
+                class="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-6 rounded-full transition duration-300 shadow-lg transform hover:scale-105">
+            ยืนยันอายุ!
+        </button>
     </div>
 
-    <!-- Main Container -->
-    <div class="perspective-1000 w-full max-w-md h-[600px] relative z-10 group" id="cardContainer">
+    <!-- STEP 2: หน้าปกการ์ด (Hidden) -->
+    <div id="page-card" class="hidden bg-white max-w-md w-full mx-4 h-[500px] rounded-2xl card-shadow relative border-8 border-orange-100 flex flex-col items-center justify-center text-center p-6 z-10">
+        <div class="w-32 h-32 bg-orange-100 rounded-full flex items-center justify-center mb-4 border-4 border-orange-300 overflow-hidden relative">
+            <span class="text-5xl">🐯</span> 
+        </div>
+
+        <h2 class="text-3xl text-gray-700 font-bold mb-2">Happy Birthday</h2>
         
-        <!-- The Card Wrapper -->
-        <div class="card-3d relative w-full h-full duration-1000 shadow-2xl rounded-2xl" id="cardInner">
+        <div class="relative inline-block my-4">
+            <span class="text-gray-400 text-xl absolute -top-4 -left-4 transform -rotate-12">เข้าสู่ปีที่</span>
+            <span id="displayAge" class="text-7xl font-bold text-orange-500 drop-shadow-md">--</span>
+            <span class="text-gray-400 text-xl absolute -bottom-2 -right-6 transform rotate-12">ขวบแล้ว!</span>
+        </div>
+
+        <p class="text-gray-500 mt-4 mb-8">ขอให้มีความสุขมากๆ นะ</p>
+
+        <button onclick="openFinalContent()" 
+                class="bg-red-400 hover:bg-red-500 text-white text-xl font-bold py-3 px-10 rounded-full transition duration-300 shadow-lg animate-pulse">
+            เปิดอ่านการ์ด 💌
+        </button>
+    </div>
+
+    <!-- STEP 3: เนื้อหาข้างใน (อัปเดตใหม่: มีปุ่มจุดพลุ + ลูกเล่น Code) -->
+    <div id="page-content" class="hidden w-full h-full absolute inset-0 bg-white z-20 flex flex-col items-center justify-center p-4">
+        
+        <button onclick="location.reload()" class="absolute top-4 right-4 z-50 bg-gray-100 p-2 rounded-full text-gray-400 hover:bg-gray-200">
+            ❌
+        </button>
+
+        <!-- การ์ดข้อความ (เลียนแบบหน้าจอโปรแกรมแต่ธีม Cute) -->
+        <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl shadow-xl max-w-md w-full p-6 text-center relative overflow-hidden">
             
-            <!-- Front of Card -->
-            <div class="card-front absolute w-full h-full bg-white rounded-2xl overflow-hidden shadow-xl border-4 border-slate-100 flex flex-col items-center justify-between p-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-                
-                <!-- Decoration -->
-                <div class="w-full flex justify-between text-blue-200 text-4xl">
-                    <i class="fa-solid fa-quote-left"></i>
-                    <i class="fa-solid fa-quote-right"></i>
-                </div>
-
-                <!-- Main Content Front -->
-                <div class="text-center z-10">
-                    <div class="animate-float mb-6 flex justify-center">
-                        <!-- Image Placeholder -->
-                        <img src="rapee.jpg" alt="Birthday Person" class="w-32 h-32 rounded-full object-cover shadow-lg neon-glow border-4 border-white/20">
-                    </div>
-                    <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-2 hand-font text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                        Happy Birthday!
-                    </h1>
-                    <p class="text-slate-500 mt-2">แฮปๆนะครับ พี่แพร์ ไม่ได้ติดต่อกันนานเลย</p>
-                </div>
-
-                <!-- Click Instruction -->
-                <div class="text-center pb-4">
-                    <p class="text-sm text-slate-400 mb-2">แตะเพื่อเปิดการ์ด</p>
-                    <button onclick="toggleCard()" class="w-12 h-12 rounded-full bg-slate-100 hover:bg-blue-50 text-blue-500 flex items-center justify-center transition shadow-md animate-bounce">
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-
-                <!-- Decorative Pattern -->
-                <div class="absolute bottom-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+            <!-- Header แบบโปรแกรม -->
+            <div class="absolute top-0 left-0 w-full bg-orange-200 h-8 flex items-center px-4 space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                <span class="text-orange-600 text-xs font-bold ml-2 font-code">wish_generator.cute</span>
             </div>
 
-            <!-- Back of Card (Inside) -->
-            <div class="card-back absolute w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-700 p-8 flex flex-col text-white">
-                
-                <!-- Header -->
-                <div class="flex items-center justify-between mb-8 border-b border-slate-700 pb-4">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-terminal text-green-400"></i>
-                        <span class="text-sm font-mono text-green-400">wish_generator.exe</span>
-                    </div>
-                    <button onclick="toggleCard()" class="text-slate-500 hover:text-white transition">
-                        <i class="fa-solid fa-rotate-left"></i>
-                    </button>
-                </div>
+            <div class="mt-8 mb-6">
+                <h2 class="text-3xl font-bold text-orange-600 mb-4">สุขสันต์วันเกิดนะครับ! 🎉</h2>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                    ขอให้ปีนี้เป็นปีที่ดี สมหวังในสิ่งที่ปรารถนา <br>
+                    สุขภาพแข็งแรง ตลอดทั้งปีน้าา <br>
+                    และมีความสุขมากๆ นะครับ
+                </p>
 
-                <!-- Message Area -->
-                <div class="flex-1 flex flex-col justify-center items-center text-center space-y-4">
-                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 mb-2">
-                        สุขสันต์วันเกิดนะครับ!
-                    </h2>
-                    <p class="text-slate-300 leading-relaxed font-light">
-                        ขอให้ปีนี้เป็นปีที่ดี สมหวังในสิ่งที่ปรถนา <br>
-                        มีสุขภาพแข็งแรง ตลอดทั้งปีน้าา <br>
-                        และมีความสุขมากๆ นะครับ
-                    </p>
-                    
-                    <div class="py-6">
-                        <div class="inline-block px-4 py-2 rounded bg-slate-800 border border-slate-700 text-yellow-400 font-mono text-sm">
-                           All sadness = happiness;
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Button -->
-                <div class="mt-auto">
-                    <button onclick="celebrate()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-bold text-white shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-105 transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-gift"></i> จุดพลุเพื่อเพิ่มความสุข!!
-                    </button>
+                <!-- ลูกเล่น Code กวนๆ -->
+                <div class="bg-gray-800 text-green-400 rounded-lg p-3 text-sm font-code text-left shadow-inner mx-auto w-fit">
+                    <span class="text-pink-400">var</span> sadness = <span class="text-yellow-400">null</span>;<br>
+                    <span class="text-pink-400">const</span> happiness = <span class="text-yellow-400">Infinity</span>;
                 </div>
             </div>
+
+            <!-- ปุ่มจุดพลุ -->
+            <button onclick="fireworks()" 
+                    class="w-full bg-gradient-to-r from-pink-400 to-orange-400 hover:from-pink-500 hover:to-orange-500 text-white font-bold py-4 px-6 rounded-xl transition duration-300 shadow-lg transform hover:scale-105 flex items-center justify-center space-x-2">
+                <span>🎁</span>
+                <span>จุดพลุเพื่อเพิ่มความสุข!!</span>
+            </button>
         </div>
     </div>
 
     <script>
-        let isOpen = false;
-        const cardInner = document.getElementById('cardInner');
+        // --- Logic การเปลี่ยนหน้า ---
+        const pageInput = document.getElementById('page-input');
+        const pageCard = document.getElementById('page-card');
+        const pageContent = document.getElementById('page-content');
+        const ageInput = document.getElementById('ageInput');
+        const displayAge = document.getElementById('displayAge');
+        const errorMsg = document.getElementById('error-msg');
 
-        function toggleCard() {
-            isOpen = !isOpen;
-            if (isOpen) {
-                cardInner.style.transform = 'rotateY(180deg)';
-                // Trigger small confetti when opening
-                launchConfetti(0.3);
-            } else {
-                cardInner.style.transform = 'rotateY(0deg)';
+        function goToCardPage() {
+            const age = ageInput.value;
+            if (!age) {
+                errorMsg.classList.remove('hidden');
+                ageInput.classList.add('border-red-400');
+                return;
+            }
+            errorMsg.classList.add('hidden');
+            ageInput.classList.remove('border-red-400');
+            displayAge.innerText = age;
+            pageInput.classList.add('hidden');
+            pageCard.classList.remove('hidden');
+            pageCard.classList.add('fade-in');
+        }
+
+        function openFinalContent() {
+            pageCard.style.transition = "transform 0.5s ease-in-out, opacity 0.5s";
+            pageCard.style.transform = "scale(1.1)";
+            pageCard.style.opacity = "0";
+            setTimeout(() => {
+                pageCard.classList.add('hidden');
+                pageCard.style.display = ''; 
+                pageContent.classList.remove('hidden');
+                pageContent.classList.add('fade-in');
+            }, 400);
+        }
+
+        // --- Logic พลุ (Fireworks) ---
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let cw = window.innerWidth;
+        let ch = window.innerHeight;
+        canvas.width = cw;
+        canvas.height = ch;
+        
+        let particles = [];
+
+        function resizeCanvas() {
+            cw = window.innerWidth;
+            ch = window.innerHeight;
+            canvas.width = cw;
+            canvas.height = ch;
+        }
+        window.addEventListener("resize", resizeCanvas);
+
+        function createParticle(x, y, color) {
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    color: color,
+                    radius: Math.random() * 3 + 1,
+                    velocity: {
+                        x: (Math.random() - 0.5) * 6,
+                        y: (Math.random() - 0.5) * 6
+                    },
+                    alpha: 1,
+                    life: Math.random() * 40 + 40
+                });
             }
         }
 
-        function celebrate() {
-            // Big celebration
-            const duration = 3000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.globalCompositeOperation = 'lighter';
 
-            const random = (min, max) => Math.random() * (max - min) + min;
-
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
+            particles.forEach((p, index) => {
+                if (p.life > 0) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fill();
+                    
+                    p.x += p.velocity.x;
+                    p.y += p.velocity.y;
+                    p.velocity.y += 0.05; // Gravity
+                    p.alpha -= 0.01;
+                    p.life--;
+                } else {
+                    particles.splice(index, 1);
                 }
-
-                const particleCount = 50 * (timeLeft / duration);
-                
-                // since particles fall down, start a bit higher than random
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
-
-            // Change button text temporarily
-            const btn = document.querySelector('button[onclick="celebrate()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> ส่งความสุขแล้ว!';
-            btn.classList.add('bg-green-600');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.remove('bg-green-600');
-            }, 3000);
-        }
-
-        function launchConfetti(ratio) {
-            confetti({
-                particleCount: 100 * ratio,
-                spread: 70,
-                origin: { y: 0.6 }
             });
+        }
+        
+        animate(); // Start loop
+
+        function fireworks() {
+            // จุดพลุหลายๆ จุดแบบสุ่ม
+            const colors = ['#F87171', '#FBBF24', '#34D399', '#60A5FA', '#A78BFA']; // สีพาสเทล
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                const x = Math.random() * cw;
+                const y = Math.random() * (ch * 0.6); // ครึ่งบนของจอ
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                createParticle(x, y, color);
+                
+                count++;
+                if(count > 10) clearInterval(interval); // จุด 10 ครั้งแล้วหยุด
+            }, 300);
         }
     </script>
 </body>
